@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="http://www.springframework.org/schema/beans" xmlns:p="http://www.springframework.org/schema/p"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+                        http://www.springframework.org/schema/beans/spring-beans-4.0.xsd  
+                        http://www.springframework.org/schema/context  
+                        http://www.springframework.org/schema/context/spring-context-4.0.xsd">
+    <!-- 引入文件 -->
+    <context:property-placeholder location="classpath*:properties/base.properties" ignore-unresolvable="true" />
+                        
+    <bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig">
+        <property name="maxIdle" value="${redis.maxIdle}" />
+        <property name="minIdle" value="${redis.minIdle}" />
+        <property name="maxTotal" value="${redis.maxTotal}" />
+        <property name="testOnBorrow" value="true" />
+    </bean>
+
+    <bean id="clusterRedisNodes1" class="org.springframework.data.redis.connection.RedisNode">
+        <constructor-arg value="127.0.0.1" />
+        <constructor-arg value="7000" type="int" />
+    </bean>
+    <bean id="clusterRedisNodes2" class="org.springframework.data.redis.connection.RedisNode">
+        <constructor-arg value="127.0.0.1" />
+        <constructor-arg value="7001" type="int" />
+    </bean>
+    <bean id="clusterRedisNodes3" class="org.springframework.data.redis.connection.RedisNode">
+        <constructor-arg value="127.0.0.1" />
+        <constructor-arg value="7002" type="int" />
+    </bean>
+    <bean id="clusterRedisNodes4" class="org.springframework.data.redis.connection.RedisNode">
+        <constructor-arg value="127.0.0.1" />
+        <constructor-arg value="7003" type="int" />
+    </bean>
+    <bean id="clusterRedisNodes5" class="org.springframework.data.redis.connection.RedisNode">
+        <constructor-arg value="127.0.0.1" />
+        <constructor-arg value="7004" type="int" />
+    </bean>
+    <bean id="clusterRedisNodes6" class="org.springframework.data.redis.connection.RedisNode">
+        <constructor-arg value="127.0.0.1" />
+        <constructor-arg value="7005" type="int" />
+    </bean>
+
+    <bean id="redisClusterConfiguration"
+        class="org.springframework.data.redis.connection.RedisClusterConfiguration">
+        <property name="clusterNodes">
+            <set>
+                <ref bean="clusterRedisNodes1" />
+                <ref bean="clusterRedisNodes2" />
+                <ref bean="clusterRedisNodes3" />
+                <ref bean="clusterRedisNodes4" />
+                <ref bean="clusterRedisNodes5" />
+                <ref bean="clusterRedisNodes6" />
+            </set>
+        </property>
+    </bean>
+
+    <!-- Redis连接 -->
+    <bean id="jedisConnectionFactory"
+        class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
+        <constructor-arg ref="jedisPoolConfig" />
+        <property name="password" value="${redis.password}"></property>
+        <constructor-arg ref="redisClusterConfiguration" />
+    </bean>
+    <!-- 缓存序列化方式 -->
+    <bean id="keySerializer"
+        class="org.springframework.data.redis.serializer.StringRedisSerializer" />
+    <bean id="valueSerializer"
+        class="org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer" />
+    <!-- 缓存 -->
+    <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
+        <property name="connectionFactory" ref="jedisConnectionFactory" />
+        <property name="keySerializer" ref="keySerializer" />
+        <property name="valueSerializer" ref="valueSerializer" />
+        <property name="hashKeySerializer" ref="keySerializer" />
+        <property name="hashValueSerializer" ref="valueSerializer" />
+    </bean>
+    <bean id="redisCacheManager" class="org.springframework.data.redis.cache.RedisCacheManager">
+        <constructor-arg index="0" ref="redisTemplate" />
+        <property name="defaultExpiration" value="${redis.expiration}" />
+    </bean>
+</beans>
